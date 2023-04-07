@@ -138,25 +138,26 @@ impl Triangle {
 
         let hit = d1 < eps && d2 < eps && d3 < eps || d1 > eps && d2 > eps && d3 > eps;
 
-        if hit {
-            let abx = bx - ax;
-            let aby = by - ay;
-            let abz = bz - az;
-            let acx = cx - ax;
-            let acy = cy - ay;
-            let acz = cz - az;
-
-            let normal_x = aby * acz - abz * acy;
-            let normal_y = abz * acx - abx * acz;
-            let normal_z = abx * acy - aby * acx;
-
-            let d = -(normal_x * ax + normal_y * ay + normal_z * az);
-
-            let z = -(normal_x * px + normal_y * py + d) / normal_z;
-            return z;
-        } else {
+        if !hit {
             return f64::NEG_INFINITY;
         }
+
+        let abx = bx - ax;
+        let aby = by - ay;
+        let abz = bz - az;
+        let acx = cx - ax;
+        let acy = cy - ay;
+        let acz = cz - az;
+
+        let normal_x = aby * acz - abz * acy;
+        let normal_y = abz * acx - abx * acz;
+        let normal_z = abx * acy - aby * acx;
+
+        let d = -(normal_x * ax + normal_y * ay + normal_z * az);
+
+        let z = -(normal_x * px + normal_y * py + d) / normal_z;
+
+        z
     }
 }
 

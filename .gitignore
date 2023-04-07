@@ -1,2 +1,6 @@
 /target
 /data/*.obj
+/cpp/main
+/cpp/main.dSYM
+#/.vscode
+.DS_Store
