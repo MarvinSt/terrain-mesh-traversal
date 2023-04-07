@@ -1,7 +1,6 @@
 ## Introduction
 
 This is an algorithm to perform a height query for a terrain mesh written in `rust`. The algorithm parses an .obj mesh, constructs a binary search tree acceleration structure and has a mesh traversal function returning the z height for a given x/y coordinate. It is designed to work for lookups in the x/y plane, i.e. it works in 2D assuming returning the corresponding height. It has support for multi-layered meshes and will return the greatest z value of stacked meshes. It could be extended to support bridges, this will require an initial guess for the z value and rejecting z-heights above a certain threshold with respect to the initial guess (not yet implemented). The algorithm will return `-inf` if there was no underlying triangle.
-
 ## Background
 
 The acceleration structure is a loose k-D tree, which sorts along a single axis determined based on the largest bounds (either along the x or y axis). The group of triangles is split in two groups and the min/max bounds of the groups are stored in the node data. A tree is built until we have only nodes left in the leaves.
@@ -20,6 +19,15 @@ $ cargo run --release
 
 Make sure to run it in `release` mode, as it will run significantly slower in `debug` mode.
 
+**NOTE:** A `c++` version of the algorithm is included as well in the folder `./c++`. Compile using your favoriye compiler:
+```shell
+$ cd ./cpp
+$ clang++ -O3 -std=c++17 main.cpp -o main
+```
+To launch:
+```shell
+$ ./main
+```
 ### Usage
 
 To use this algorithm in your project, the following is required:
