@@ -16,6 +16,8 @@ Build and run using cargo:
 $ cargo run --release
 ```
 
+**Note**: Unzip the included `.obj` file in the `./data` folder beforehand.
+
 Make sure to run it in `release` mode, as it will run significantly slower in `debug` mode.
 
 ### Usage
