@@ -19,7 +19,7 @@ $ cargo run --release
 
 Make sure to run it in `release` mode, as it will run significantly slower in `debug` mode.
 
-**NOTE:** A `c++` version of the algorithm is included as well in the folder `./c++`. Compile using your favorite compiler:
+**NOTE:** A `c++` version of the algorithm is included as well in the folder `./cpp`. Compile using your favorite compiler:
 ```shell
 $ cd ./cpp
 $ clang++ -O3 -std=c++17 main.cpp -o main
