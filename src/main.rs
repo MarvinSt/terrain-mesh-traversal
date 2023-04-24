@@ -218,22 +218,15 @@ impl Triangle {
         let d3 = acx * (py - cy) - acy * (px - cx);
 
         // pre-calculate and store the normal and d value as part of the triangle
-        /* */
         let normal_x = aby * acz - abz * acy;
         let normal_y = abz * acx - abx * acz;
         let normal_z = abx * acy - aby * acx;
 
         let d = normal_x * ax + normal_y * ay + normal_z * az;
 
-        /*
-            let d = self.n.x * ax + self.n.y * ay + self.n.z * az;
-        */
-        // let hit: bool = d1 < eps && d2 < eps && d3 < eps || d1 > -eps && d2 > -eps && d3 > -eps;
         let hit: bool = d1 > -EPS && d2 > -EPS && d3 > -EPS;
-
         if hit {
             (d - normal_x * px - normal_y * py) / normal_z
-            // (d - self.n.x * px - self.n.y * py) / self.n.z
         } else {
             f64::NEG_INFINITY
         }
@@ -476,25 +469,11 @@ impl Mesh {
                     }
 
                     for i in 2..vertex_count {
-                        // let tri = Triangle {
-                        //     x1: vertices[vertex_indices[0]].x,
-                        //     y1: vertices[vertex_indices[0]].y,
-                        //     z1: vertices[vertex_indices[0]].z,
-                        //     x2: vertices[vertex_indices[i - 1]].x,
-                        //     y2: vertices[vertex_indices[i - 1]].y,
-                        //     z2: vertices[vertex_indices[i - 1]].z,
-                        //     x3: vertices[vertex_indices[i]].x,
-                        //     y3: vertices[vertex_indices[i]].y,
-                        //     z3: vertices[vertex_indices[i]].z,
-                        // };
                         let tri = Triangle::new(
                             vertices[vertex_indices[0]],
                             vertices[vertex_indices[i - 1]],
                             vertices[vertex_indices[i]],
                         );
-
-                        // TODO: Make sure all faces have vertices oriented in the same direction
-                        // Perform CCW test and swap here
 
                         triangles.push(tri);
                     }
