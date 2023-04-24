@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::mem::swap;
 use std::time::Instant;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -8,7 +9,7 @@ enum Axis {
     Y,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 struct Vertex {
     x: f64,
     y: f64,
@@ -26,6 +27,7 @@ struct Triangle {
     x3: f64,
     y3: f64,
     z3: f64,
+    // n: Vertex,
 }
 
 struct Mesh {
@@ -43,17 +45,59 @@ struct Node {
     end_index: usize,
 }
 
+impl Vertex {
+    fn new(x: f64, y: f64, z: f64) -> Self {
+        Self { x, y, z }
+    }
+
+    fn default() -> Self {
+        Self {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        }
+    }
+}
+
 impl Node {
-    fn point_in(&self, point: &Vertex) -> bool {
+    #[inline(always)]
+    fn point_in(&self, point: Vertex) -> bool {
         if self.axis == Axis::X {
-            return !(point.x < self.min || point.x > self.max);
+            return !(point.x < self.min as f64 || point.x > self.max as f64);
         } else {
-            return !(point.y < self.min || point.y > self.max);
+            return !(point.y < self.min as f64 || point.y > self.max as f64);
         };
     }
 }
 
 impl Triangle {
+    fn new(v1: Vertex, v2: Vertex, v3: Vertex) -> Self {
+        let determinant = -v2.y * v3.x + v1.y * (v3.x - v2.x) + v1.x * (v2.y - v3.y) + v2.x * v3.y;
+
+        let mut v1 = v1;
+        let mut v2 = v2;
+
+        if determinant > 0.0 {
+            swap(&mut v1, &mut v2);
+        };
+
+        let tri = Self {
+            x1: v1.x,
+            y1: v1.y,
+            z1: v1.z,
+            x2: v2.x,
+            y2: v2.y,
+            z2: v2.z,
+            x3: v3.x,
+            y3: v3.y,
+            z3: v3.z,
+            // n: Vertex::default(),
+        };
+
+        // tri.n = tri.calc_normal();
+        tri
+    }
+
     fn centroid(&self) -> Vertex {
         Vertex {
             x: self.centroid_x(),
@@ -123,28 +167,17 @@ impl Triangle {
         self.y1.max(self.y2).max(self.y3)
     }
 
-    fn get_z(&self, point: &Vertex) -> f64 {
-        let eps = 1.0e-9;
-        let (px, py) = (point.x, point.y);
+    fn calc_normal(&self) -> Vertex {
         let [(ax, ay, az), (bx, by, bz), (cx, cy, cz)] = [
             (self.x1, self.y1, self.z1),
             (self.x2, self.y2, self.z2),
             (self.x3, self.y3, self.z3),
         ];
 
-        let d1 = (px - ax) * (by - ay) - (bx - ax) * (py - ay);
-        let d2 = (px - bx) * (cy - by) - (cx - bx) * (py - by);
-        let d3 = (px - cx) * (ay - cy) - (ax - cx) * (py - cy);
-
-        let hit = d1 < eps && d2 < eps && d3 < eps || d1 > eps && d2 > eps && d3 > eps;
-
-        if !hit {
-            return f64::NEG_INFINITY;
-        }
-
         let abx = bx - ax;
         let aby = by - ay;
         let abz = bz - az;
+
         let acx = cx - ax;
         let acy = cy - ay;
         let acz = cz - az;
@@ -153,11 +186,57 @@ impl Triangle {
         let normal_y = abz * acx - abx * acz;
         let normal_z = abx * acy - aby * acx;
 
-        let d = -(normal_x * ax + normal_y * ay + normal_z * az);
+        Vertex {
+            x: normal_x,
+            y: normal_y,
+            z: normal_z,
+        }
+    }
 
-        let z = -(normal_x * px + normal_y * py + d) / normal_z;
+    fn get_z(&self, point: Vertex) -> f64 {
+        const EPS: f64 = 1.0e-9;
+        let (px, py) = (point.x, point.y);
+        let [(ax, ay, az), (bx, by, bz), (cx, cy, cz)] = [
+            (self.x1, self.y1, self.z1),
+            (self.x2, self.y2, self.z2),
+            (self.x3, self.y3, self.z3),
+        ];
 
-        z
+        let abx = bx - ax;
+        let aby = by - ay;
+        let abz = bz - az;
+
+        let acx = cx - ax;
+        let acy = cy - ay;
+        let acz = cz - az;
+
+        let bcx = cx - bx;
+        let bcy = cy - by;
+
+        let d1 = aby * (px - ax) - abx * (py - ay);
+        let d2 = bcy * (px - bx) - bcx * (py - by);
+        let d3 = acx * (py - cy) - acy * (px - cx);
+
+        // pre-calculate and store the normal and d value as part of the triangle
+        /* */
+        let normal_x = aby * acz - abz * acy;
+        let normal_y = abz * acx - abx * acz;
+        let normal_z = abx * acy - aby * acx;
+
+        let d = normal_x * ax + normal_y * ay + normal_z * az;
+
+        /*
+            let d = self.n.x * ax + self.n.y * ay + self.n.z * az;
+        */
+        // let hit: bool = d1 < eps && d2 < eps && d3 < eps || d1 > -eps && d2 > -eps && d3 > -eps;
+        let hit: bool = d1 > -EPS && d2 > -EPS && d3 > -EPS;
+
+        if hit {
+            (d - normal_x * px - normal_y * py) / normal_z
+            // (d - self.n.x * px - self.n.y * py) / self.n.z
+        } else {
+            f64::NEG_INFINITY
+        }
     }
 }
 
@@ -185,27 +264,17 @@ mod tests {
             z: 1.0,
         };
 
-        let triangle = Triangle {
-            x1: v1.x,
-            y1: v1.y,
-            z1: v1.z,
-            x2: v2.x,
-            y2: v2.y,
-            z2: v2.z,
-            x3: v3.x,
-            y3: v3.y,
-            z3: v3.z,
-        };
+        let triangle = Triangle::new(v1, v2, v3);
 
         // Evaluate centroid
         let p = triangle.centroid();
-        let z = triangle.get_z(&p);
+        let z = triangle.get_z(p);
         assert!(f64::abs(p.z - z) < eps);
 
         // Evaluate each corner
         for i in 0..3 {
             let p = triangle.vertex(i);
-            let z = triangle.get_z(&p);
+            let z = triangle.get_z(p);
             assert!(f64::abs(p.z - z) < eps);
         }
 
@@ -218,7 +287,7 @@ mod tests {
                 y: 0.5 * (va.y + vb.y),
                 z: 0.5 * (va.z + vb.z),
             };
-            let z = triangle.get_z(&p);
+            let z = triangle.get_z(p);
             assert!(f64::abs(p.z - z) < eps);
         }
     }
@@ -278,10 +347,13 @@ impl Mesh {
             (y_min, y_max)
         };
 
+        // boundary padding
+        const EPS: f64 = 1.0e-9;
+
         Node {
             axis,
-            min,
-            max,
+            min: (min + EPS) as f64,
+            max: (max - EPS) as f64,
             start_index,
             end_index,
             child_index: 0,
@@ -404,17 +476,25 @@ impl Mesh {
                     }
 
                     for i in 2..vertex_count {
-                        let tri = Triangle {
-                            x1: vertices[vertex_indices[0]].x,
-                            y1: vertices[vertex_indices[0]].y,
-                            z1: vertices[vertex_indices[0]].z,
-                            x2: vertices[vertex_indices[i - 1]].x,
-                            y2: vertices[vertex_indices[i - 1]].y,
-                            z2: vertices[vertex_indices[i - 1]].z,
-                            x3: vertices[vertex_indices[i]].x,
-                            y3: vertices[vertex_indices[i]].y,
-                            z3: vertices[vertex_indices[i]].z,
-                        };
+                        // let tri = Triangle {
+                        //     x1: vertices[vertex_indices[0]].x,
+                        //     y1: vertices[vertex_indices[0]].y,
+                        //     z1: vertices[vertex_indices[0]].z,
+                        //     x2: vertices[vertex_indices[i - 1]].x,
+                        //     y2: vertices[vertex_indices[i - 1]].y,
+                        //     z2: vertices[vertex_indices[i - 1]].z,
+                        //     x3: vertices[vertex_indices[i]].x,
+                        //     y3: vertices[vertex_indices[i]].y,
+                        //     z3: vertices[vertex_indices[i]].z,
+                        // };
+                        let tri = Triangle::new(
+                            vertices[vertex_indices[0]],
+                            vertices[vertex_indices[i - 1]],
+                            vertices[vertex_indices[i]],
+                        );
+
+                        // TODO: Make sure all faces have vertices oriented in the same direction
+                        // Perform CCW test and swap here
 
                         triangles.push(tri);
                     }
@@ -425,7 +505,7 @@ impl Mesh {
         triangles
     }
 
-    fn traverse(&self, point: &Vertex) -> f64 {
+    fn traverse(&self, point: Vertex) -> f64 {
         let mut height = f64::NEG_INFINITY;
 
         let mut stack: [usize; 64] = [0; 64];
@@ -448,7 +528,7 @@ impl Mesh {
                 // Calculate new maximum height
                 height = self.triangles[node.start_index..node.end_index]
                     .iter()
-                    .fold(height, |h, triangle| triangle.get_z(&point).max(h));
+                    .fold(height, |h, triangle| triangle.get_z(point).max(h));
 
                 /*
                 for triangle in self.triangles[node.start_index..node.end_index].iter() {
@@ -484,13 +564,13 @@ fn main() {
         y: 0.0,
         z: 0.0,
     };
-    p.z = mesh.traverse(&p);
+    p.z = mesh.traverse(p);
 
     // Evaluate the x/y coordinate of each triangle centroid
     // and compare the resulting z coordinate
     mesh.triangles.iter().for_each(|tri| {
         let p = tri.centroid();
-        let z = mesh.traverse(&p);
+        let z = mesh.traverse(p);
 
         if f64::abs(p.z - z) < eps {
             match_count += 1;
