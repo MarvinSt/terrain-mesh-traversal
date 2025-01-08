@@ -116,34 +116,37 @@ public:
         double cy = vertices[v3].y;
         double cz = vertices[v3].z;
 
-        double d1 = (px - ax) * (by - ay) - (bx - ax) * (py - ay);
-        double d2 = (px - bx) * (cy - by) - (cx - bx) * (py - by);
-        double d3 = (px - cx) * (ay - cy) - (ax - cx) * (py - cy);
+        auto abx = bx - ax;
+        auto aby = by - ay;
+        auto abz = bz - az;
 
-        bool hit = d1 < eps && d2 < eps && d3 < eps || d1 > eps && d2 > eps && d3 > eps;
+        auto acx = cx - ax;
+        auto acy = cy - ay;
+        auto acz = cz - az;
 
-        if (!hit)
+        auto bcx = cx - bx;
+        auto bcy = cy - by;
+
+        auto d1 = aby * (px - ax) - abx * (py - ay);
+        auto d2 = bcy * (px - bx) - bcx * (py - by);
+        auto d3 = acx * (py - cy) - acy * (px - cx);
+
+        // pre-calculate and store the normal and d value as part of the triangle
+        auto normal_x = aby * acz - abz * acy;
+        auto normal_y = abz * acx - abx * acz;
+        auto normal_z = abx * acy - aby * acx;
+
+        auto d = normal_x * ax + normal_y * ay + normal_z * az;
+        // auto hit = d1 > -eps && d2 > -eps && d3 > -eps;
+        auto hit = d1 < eps && d2 < eps && d3 < eps || d1 > -eps && d2 > -eps && d3 > -eps;
+        if (hit)
+            return (d - normal_x * px - normal_y * py) / normal_z;
+        else
             return std::numeric_limits<FLOAT_TYPE>::quiet_NaN();
-
-        double abx = bx - ax;
-        double aby = by - ay;
-        double abz = bz - az;
-        double acx = cx - ax;
-        double acy = cy - ay;
-        double acz = cz - az;
-
-        double normal_x = aby * acz - abz * acy;
-        double normal_y = abz * acx - abx * acz;
-        double normal_z = abx * acy - aby * acx;
-
-        double d = -(normal_x * ax + normal_y * ay + normal_z * az);
-
-        double z = -(normal_x * px + normal_y * py + d) / normal_z;
-
-        return z;
     }
 
-    inline bool PointInTriangle(std::vector<Vertex> &vertices, Vertex p)
+    inline bool
+    PointInTriangle(std::vector<Vertex> &vertices, Vertex p)
     {
         double eps = 1.0e-9;
 
@@ -234,9 +237,9 @@ public:
     std::vector<Triangle> triangles;
     std::vector<Node> nodes;
 
-    int leaf_size = 16;
+    int leaf_size = 8;
 
-    Mesh(){};
+    Mesh() {};
 
     ~Mesh()
     {
@@ -538,6 +541,7 @@ int main()
 
     Mesh mesh;
     mesh.LoadMesh("../data/paul_ricard_colidable.obj", true);
+    // mesh.LoadMesh("../data/le_mans_collidable.obj");
     mesh.BuildTree();
 
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
@@ -567,7 +571,7 @@ int main()
         if (fabs(lc.height - pt.z) < 1.0e-6)
             match_count++;
         // else
-        // std::cout << "x,y: " << pt.x << "," << pt.y << " : " << lc.height << " " << pt.z << std::endl;
+        //    std::cout << "x,y: " << pt.x << "," << pt.y << " : " << lc.height << " " << pt.z << std::endl;
     }
 
     duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);

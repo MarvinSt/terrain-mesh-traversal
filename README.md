@@ -15,6 +15,11 @@ Build and run using cargo:
 $ cargo run --release
 ```
 
+Test coverage:
+```shell
+$ cargo llvm-cov --html && open target/llvm-cov/html/index.html
+```
+
 **Note**: Unzip the included `.obj` file in the `./data` folder beforehand.
 
 Make sure to run it in `release` mode, as it will run significantly slower in `debug` mode.
