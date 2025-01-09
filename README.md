@@ -1,4 +1,4 @@
-[![codecov](https://codecov.io/github/MarvinSt/terrain-mesh-traversal/graph/badge.svg?token=47AP4AB9FY)](https://codecov.io/github/MarvinSt/terrain-mesh-traversal)
+[![Rust](https://github.com/MarvinSt/terrain-mesh-traversal/actions/workflows/rust.yml/badge.svg)](https://github.com/MarvinSt/terrain-mesh-traversal/actions/workflows/rust.yml) [![codecov](https://codecov.io/github/MarvinSt/terrain-mesh-traversal/graph/badge.svg?token=47AP4AB9FY)](https://codecov.io/github/MarvinSt/terrain-mesh-traversal)
 
 ## Introduction
 
