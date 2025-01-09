@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/github/MarvinSt/terrain-mesh-traversal/graph/badge.svg?token=47AP4AB9FY)](https://codecov.io/github/MarvinSt/terrain-mesh-traversal)
+
 ## Introduction
 
 This is an algorithm to perform a height query for a terrain mesh written in `rust`. The algorithm parses an .obj mesh, constructs a binary search tree acceleration structure and has a mesh traversal function returning the z height for a given x/y coordinate. It is designed to work for lookups in the x/y plane, i.e. it works in 2D assuming returning the corresponding height. It has support for multi-layered meshes and will return the greatest z value of stacked meshes. It could be extended to support bridges, this will require an initial guess for the z value and rejecting z-heights above a certain threshold with respect to the initial guess (not yet implemented). The algorithm will return `-inf` if there was no underlying triangle.
