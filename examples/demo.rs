@@ -1,5 +1,5 @@
 use std::time::Instant;
-use terrain::{Mesh, Vertex};
+use terrain::Mesh;
 
 fn main() {
     let file_path = "./data/paul_ricard_colidable.obj";
@@ -21,11 +21,11 @@ fn main() {
 
     let eps = 1.0e-9;
 
-    let upvec = if y_up {
-        Vertex::new(0.0, 1.0, 0.0)
-    } else {
-        Vertex::new(0.0, 0.0, 1.0)
-    };
+    // let upvec = if y_up {
+    //     Vertex::new(0.0, 1.0, 0.0)
+    // } else {
+    //     Vertex::new(0.0, 0.0, 1.0)
+    // };
 
     // Evaluate the x/y coordinate of each triangle centroid
     // and compare the resulting z coordinate

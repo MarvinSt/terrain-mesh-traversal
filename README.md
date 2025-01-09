@@ -11,10 +11,14 @@ The reason why this structure was chosen over a boundary volume hierarchy tree o
 
 ## Build and Run
 
-Build and run using cargo:
+Build using cargo:
 
 ```shell
-$ cargo run --release
+$ cargo build --release
+```
+
+```shell
+$ cargo run --release --example demo
 ```
 
 Test coverage:
